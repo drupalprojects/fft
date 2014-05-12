@@ -61,7 +61,8 @@ function fft_cleanup_header_comment($str) {
 /**
  * Get avaiables templates.
  *
- * @return array List of Field formatter template.
+ * @return array
+ *   List of Field formatter template.
  */
 function fft_get_templates() {
   static $page_templates = null;
@@ -221,10 +222,14 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
 
 /**
  * Get image url with stylename.
- * @param  string $image_uri       Image uri.
- * @param  string $style image style name.
  *
- * @return string            Return image url.
+ * @param  string $image_uri
+ *   Image uri.
+ * @param  string $style
+ *   Image style name.
+ *
+ * @return string
+ *   Return image url.
  */
 function fft_field_styled_image_url($image_uri, $style) {
   $image_filepath = image_style_path($style, $image_uri);
@@ -237,10 +242,14 @@ function fft_field_styled_image_url($image_uri, $style) {
 
 /**
  * Render template with variables.
- * @param  string $template  Template name.
- * @param  array $variables  Variables for template.
  *
- * @return string            Rendered template.
+ * @param  string $template
+ *   Template name.
+ * @param  array $variables
+ *   Variables for template.
+ *
+ * @return string
+ *   Rendered template.
  */
 function fft_render($template, $variables) {
   $template_file = fft_store_dir() . "/" . $template;
@@ -253,7 +262,8 @@ function fft_render($template, $variables) {
 /**
  * Get store directory.
  *
- * @return string Path of store dicrectory.
+ * @return string
+ *   Path of store dicrectory.
  */
 function fft_store_dir() {
   return variable_get('fft_store_dir', "sites/all/formatter");
