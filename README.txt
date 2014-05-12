@@ -16,8 +16,8 @@ Usage
 - Create your template, default formmater template store in folder
 'sites/all/formatter', you can change this folder at 'admin/config/content/fft'.
 Formatter template create as normal tpl template, example you create slideshow
-template, create file with name 'slideshow.tpl.php' in folder 'sites/all/formatter'
-open file and type:
+template, create file with name 'slideshow.tpl.php' in folder
+'sites/all/formatter' open file and type:
 <code>
 <?php
 /*Template Name: Slideshow Template*/

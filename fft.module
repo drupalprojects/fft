@@ -19,12 +19,15 @@ function fft_menu() {
   return $items;
 }
 
-function fft_config_form($form, &$form_state){
+/**
+ * Config form for Field formatter template.
+ */
+function fft_config_form($form, &$form_state) {
   $form['fft_store_dir'] = array(
     '#type'          => 'textfield',
     '#title'         => t('Formmater template directory'),
     '#default_value' => fft_store_dir(),
-    '#description'   => t('Configure directory store field formatter template.')
+    '#description'   => t('Configure directory store field formatter template.'),
   );
 
   return system_settings_form($form);
@@ -44,15 +47,23 @@ function fft_field_formatter_info() {
         'image_style_1' => 'thumbnail',
         'image_style_2' => 'medium',
       ),
-    )
+    ),
   );
 }
 
+/**
+ * Clear up string.
+ */
 function fft_cleanup_header_comment($str) {
   return trim(preg_replace("/\s*(?:\*\/|\?>).*/", '', $str));
 }
 
-function fft_get_templates(){
+/**
+ * Get avaiables templates.
+ *
+ * @return array List of Field formatter template.
+ */
+function fft_get_templates() {
   static $page_templates = null;
   if(!$page_templates){
     $files = file_scan_directory(fft_store_dir(), '/^.*\.php$/');
@@ -209,16 +220,18 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
 }
 
 /**
- * Get image url with stylename
+ * Get image url with stylename.
  * @param  string $image_uri       Image uri.
  * @param  string $style image style name.
+ *
  * @return string            Return image url.
  */
-function fft_field_styled_image_url($image_uri, $style){
+function fft_field_styled_image_url($image_uri, $style) {
   $image_filepath = image_style_path($style, $image_uri);
   if (!file_exists($image_filepath)) {
     image_style_create_derivative(image_style_load($style), $image_uri, $image_filepath);
   }
+
   return file_create_url($image_filepath);
 }
 
@@ -226,9 +239,10 @@ function fft_field_styled_image_url($image_uri, $style){
  * Render template with variables.
  * @param  string $template  Template name.
  * @param  array $variables  Variables for template.
+ *
  * @return string            Rendered template.
  */
-function fft_render($template, $variables){
+function fft_render($template, $variables) {
   $template_file = fft_store_dir() . "/" . $template;
   if(!is_file($template_file)) return "";
   $render_fn = function_exists('phptemplate_render_template')? 'phptemplate_render_template' : 'theme_render_template';
@@ -236,6 +250,11 @@ function fft_render($template, $variables){
   return $render_fn($template_file, $variables);
 }
 
-function fft_store_dir(){
+/**
+ * Get store directory.
+ *
+ * @return string Path of store dicrectory.
+ */
+function fft_store_dir() {
   return variable_get('fft_store_dir', "sites/all/formatter");
 }
