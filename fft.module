@@ -1,0 +1,241 @@
+<?php
+
+/**
+ * @file
+ * Field formatter template.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function fft_menu() {
+  $items['admin/config/content/fft'] = array(
+    'title'            => 'Field Formmater Template',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('fft_config_form'),
+    'access arguments' => array('administer site configuration'),
+  );
+
+  return $items;
+}
+
+function fft_config_form($form, &$form_state){
+  $form['fft_store_dir'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Formmater template directory'),
+    '#default_value' => fft_store_dir(),
+    '#description'   => t('Configure directory store field formatter template.')
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function fft_field_formatter_info() {
+  $field_types = array_keys(field_info_field_types());
+  return array(
+    'fft_field' => array(
+      'label' => t('Formatter Template'),
+      'field types' => $field_types,
+      'settings' => array(
+        'template'      => '',
+        'image_style_1' => 'thumbnail',
+        'image_style_2' => 'medium',
+      ),
+    )
+  );
+}
+
+function fft_cleanup_header_comment($str) {
+  return trim(preg_replace("/\s*(?:\*\/|\?>).*/", '', $str));
+}
+
+function fft_get_templates(){
+  static $page_templates = null;
+  if(!$page_templates){
+    $files = file_scan_directory(fft_store_dir(), '/^.*\.php$/');
+    foreach ( $files as $full_path =>  $file) {
+      if ( ! preg_match( '|Template Name:(.*)$|mi', file_get_contents( $full_path ), $header ) )
+        continue;
+      $page_templates[$file->filename] = fft_cleanup_header_comment($header[1]);
+    }
+  }
+  return $page_templates;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function fft_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $form = array();
+  // Show select box for the option set
+  $optionsets = fft_get_templates();
+
+  $form['template'] = array(
+    '#title'         => t('Template'),
+    '#type'          => 'select',
+    '#options'       => $optionsets,
+    '#default_value' => $settings['template'],
+  );
+
+  switch ($field['type']) {
+    case 'image':
+        $image_styles = image_styles();
+        $image_style_options = array();
+        foreach ($image_styles as $stylename => $style) {
+          $image_style_options[$stylename] = $style['label'];
+        }
+
+        $form['image_style_1'] = array(
+          '#type' => 'select',
+          '#title' => t('Image Styles 1'),
+          '#options' => $image_style_options,
+          '#default_value' => $settings['image_style_1'],
+        );
+
+        $form['image_style_2'] = array(
+          '#type' => 'select',
+          '#title' => t('Image Styles 2'),
+          '#options' => $image_style_options,
+          '#default_value' => $settings['image_style_2'],
+        );
+      break;
+  }
+
+  return $form;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function fft_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $summary = t('Formatter Template');
+  if(isset($settings['template'])){
+    foreach (fft_get_templates() as $name => $title) {
+      if($settings['template'] == $name){
+        $summary = t('Formatter Template: ') . check_plain($title);
+      }
+    }
+  }
+
+  return $summary;
+}
+
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function fft_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  $settings = $display['settings'];
+  $data = array();
+
+  switch ($field['type']) {
+    case 'image':
+    case 'file':
+      $data = $items;
+      foreach ($data as $key => $item) {
+        $data[$key]['path']  = file_create_url($item['uri']);
+        if($field['type'] == 'image'){
+          $data[$key]['path_1'] = fft_field_styled_image_url($item['uri'], $settings['image_style_1']);
+          $dimensions = array("width" => $item['width'], "height" => $item['height']);
+          image_style_transform_dimensions($settings['image_style_1'], $dimensions);
+          $data[$key]['width_1']  = $dimensions["width"];
+          $data[$key]['height_1'] = $dimensions["height"];
+
+          $data[$key]['path_2'] = fft_field_styled_image_url($item['uri'], $settings['image_style_2']);
+          $dimensions = array("width" => $item['width'], "height" => $item['height']);
+          image_style_transform_dimensions($settings['image_style_2'], $dimensions);
+          $data[$key]['width_2']  = $dimensions["width"];
+          $data[$key]['height_2'] = $dimensions["height"];
+        }
+      }
+      break;
+    case 'text':
+    case 'text_long':
+    case 'text_with_summary':
+      foreach ($items as $key => $item) {
+        $data[] = array(
+          'text' => $item['safe_value'],
+        );
+      }
+      break;
+
+    case 'taxonomy_term_reference':
+      foreach ($items as $key => $item) {
+        $term = taxonomy_term_load($item['tid']);
+        $data[] = (array)$term;
+      }
+      break;
+
+    case 'field_collection':
+      $ids      = field_collection_field_item_to_ids($items);
+      $data     = field_collection_item_load_multiple($ids);
+      break;
+
+    case 'entityreference':
+      $ids = array();
+      foreach ($items as $key => $item) {
+        $ids[] = $item['target_id'];
+      }
+      $data = entity_load($field['settings']['target_type'], $ids);
+      break;
+
+    default:
+      $data = $items;
+      break;
+  }
+  $output = '';
+  if(!empty($data)){
+    $output = fft_render($settings['template'], array(
+      "data"   => $data,
+      'entity' => $entity
+    ));
+
+    $element[0] = array(
+      '#markup' => $output,
+    );
+  }
+
+  return $element;
+}
+
+/**
+ * Get image url with stylename
+ * @param  string $image_uri       Image uri.
+ * @param  string $style image style name.
+ * @return string            Return image url.
+ */
+function fft_field_styled_image_url($image_uri, $style){
+  $image_filepath = image_style_path($style, $image_uri);
+  if (!file_exists($image_filepath)) {
+    image_style_create_derivative(image_style_load($style), $image_uri, $image_filepath);
+  }
+  return file_create_url($image_filepath);
+}
+
+/**
+ * Render template with variables.
+ * @param  string $template  Template name.
+ * @param  array $variables  Variables for template.
+ * @return string            Rendered template.
+ */
+function fft_render($template, $variables){
+  $template_file = fft_store_dir() . "/" . $template;
+  if(!is_file($template_file)) return "";
+  $render_fn = function_exists('phptemplate_render_template')? 'phptemplate_render_template' : 'theme_render_template';
+
+  return $render_fn($template_file, $variables);
+}
+
+function fft_store_dir(){
+  return variable_get('fft_store_dir', "sites/all/formatter");
+}

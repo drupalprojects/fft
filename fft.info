@@ -1,0 +1,7 @@
+name = Field Formatter Template
+description = Provides template for Field Formmater.
+core = 7.x
+
+package = Field
+dependencies[] = field
+configure = admin/config/content/fft
