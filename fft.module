@@ -70,9 +70,10 @@ function fft_get_templates() {
     $files = file_scan_directory(fft_store_dir(), '/^.*\.php$/');
     foreach ($files as $full_path => $file) {
       $file_content = file_get_contents($full_path);
-      $header= array();
-      if (!preg_match('|Template Name:(.*)$|mi', $file_content, $header))
+      $header = array();
+      if (!preg_match('|Template Name:(.*)$|mi', $file_content, $header)) {
         continue;
+      }
       $page_templates[$file->filename] = fft_cleanup_header_comment($header[1]);
     }
   }
@@ -172,6 +173,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
           $data[$key]['height_2'] = $dimensions["height"];
         }
       }
+
       break;
     case 'text':
     case 'text_long':
@@ -181,6 +183,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
           'text' => $item['safe_value'],
         );
       }
+
       break;
 
     case 'taxonomy_term_reference':
@@ -188,6 +191,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
         $term = taxonomy_term_load($item['tid']);
         $data[] = (array)$term;
       }
+
       break;
 
     case 'field_collection':
@@ -208,7 +212,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
       break;
   }
   $output = '';
-  if(!empty($data)){
+  if (!empty($data)) {
     $output = fft_render($settings['template'], array(
       "data"   => $data,
       'entity' => $entity,
@@ -256,7 +260,7 @@ function fft_field_styled_image_url($image_uri, $style) {
 function fft_render($template, $variables) {
   $template_file = fft_store_dir() . "/" . $template;
   if (!is_file($template_file)) return "";
-  $render_fn = function_exists('phptemplate_render_template')? 'phptemplate_render_template' : 'theme_render_template';
+  $render_fn = function_exists('phptemplate_render_template') ? 'phptemplate_render_template' : 'theme_render_template';
 
   return $render_fn($template_file, $variables);
 }
