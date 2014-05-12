@@ -175,6 +175,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
       }
 
       break;
+
     case 'text':
     case 'text_long':
     case 'text_with_summary':
@@ -205,11 +206,13 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
         $ids[] = $item['target_id'];
       }
       $data = entity_load($field['settings']['target_type'], $ids);
+
       break;
 
     default:
       $data = $items;
       break;
+
   }
   $output = '';
   if (!empty($data)) {
@@ -258,7 +261,8 @@ function fft_field_styled_image_url($image_uri, $style) {
  *   Rendered template.
  */
 function fft_render($template, $variables) {
-  $template_file = fft_store_dir() . "/" . $template;
+  $template_file = fft_store_dir();
+  $template_file = $template_file . "/" . $template;
   if (!is_file($template_file)) return "";
   $render_fn = function_exists('phptemplate_render_template') ? 'phptemplate_render_template' : 'theme_render_template';
 
