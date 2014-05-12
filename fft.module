@@ -66,10 +66,11 @@ function fft_cleanup_header_comment($str) {
  */
 function fft_get_templates() {
   static $page_templates = NULL;
-  if(!$page_templates) {
+  if (!$page_templates) {
     $files = file_scan_directory(fft_store_dir(), '/^.*\.php$/');
     foreach ($files as $full_path => $file) {
       $file_content = file_get_contents($full_path);
+      $header= array();
       if (!preg_match('|Template Name:(.*)$|mi', $file_content, $header))
         continue;
       $page_templates[$file->filename] = fft_cleanup_header_comment($header[1]);
@@ -98,25 +99,25 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
 
   switch ($field['type']) {
     case 'image':
-        $image_styles = image_styles();
-        $image_style_options = array();
-        foreach ($image_styles as $stylename => $style) {
-          $image_style_options[$stylename] = $style['label'];
-        }
+      $image_styles = image_styles();
+      $image_style_options = array();
+      foreach ($image_styles as $stylename => $style) {
+        $image_style_options[$stylename] = $style['label'];
+      }
 
-        $form['image_style_1'] = array(
-          '#type' => 'select',
-          '#title' => t('Image Styles 1'),
-          '#options' => $image_style_options,
-          '#default_value' => $settings['image_style_1'],
-        );
+      $form['image_style_1'] = array(
+        '#type' => 'select',
+        '#title' => t('Image Styles 1'),
+        '#options' => $image_style_options,
+        '#default_value' => $settings['image_style_1'],
+      );
 
-        $form['image_style_2'] = array(
-          '#type' => 'select',
-          '#title' => t('Image Styles 2'),
-          '#options' => $image_style_options,
-          '#default_value' => $settings['image_style_2'],
-        );
+      $form['image_style_2'] = array(
+        '#type' => 'select',
+        '#title' => t('Image Styles 2'),
+        '#options' => $image_style_options,
+        '#default_value' => $settings['image_style_2'],
+      );
       break;
   }
 
@@ -131,10 +132,10 @@ function fft_field_formatter_settings_summary($field, $instance, $view_mode) {
   $settings = $display['settings'];
 
   $summary = t('Formatter Template');
-  if(isset($settings['template'])){
+  if (isset($settings['template'])) {
     foreach (fft_get_templates() as $name => $title) {
-      if($settings['template'] == $name){
-        $summary = t('Formatter Template: ') . check_plain($title);
+      if ($settings['template'] == $name) {
+        $summary = t('Formatter Template') . ': ' . check_plain($title);
       }
     }
   }
@@ -157,7 +158,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
       $data = $items;
       foreach ($data as $key => $item) {
         $data[$key]['path']  = file_create_url($item['uri']);
-        if($field['type'] == 'image'){
+        if ($field['type'] == 'image') {
           $data[$key]['path_1'] = fft_field_styled_image_url($item['uri'], $settings['image_style_1']);
           $dimensions = array("width" => $item['width'], "height" => $item['height']);
           image_style_transform_dimensions($settings['image_style_1'], $dimensions);
@@ -210,7 +211,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
   if(!empty($data)){
     $output = fft_render($settings['template'], array(
       "data"   => $data,
-      'entity' => $entity
+      'entity' => $entity,
     ));
 
     $element[0] = array(
@@ -224,9 +225,9 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
 /**
  * Get image url with stylename.
  *
- * @param  string $image_uri
+ * @param string $image_uri
  *   Image uri.
- * @param  string $style
+ * @param string $style
  *   Image style name.
  *
  * @return string
@@ -244,9 +245,9 @@ function fft_field_styled_image_url($image_uri, $style) {
 /**
  * Render template with variables.
  *
- * @param  string $template
+ * @param string $template
  *   Template name.
- * @param  array $variables
+ * @param array $variables
  *   Variables for template.
  *
  * @return string
@@ -254,7 +255,7 @@ function fft_field_styled_image_url($image_uri, $style) {
  */
 function fft_render($template, $variables) {
   $template_file = fft_store_dir() . "/" . $template;
-  if(!is_file($template_file)) return "";
+  if (!is_file($template_file)) return "";
   $render_fn = function_exists('phptemplate_render_template')? 'phptemplate_render_template' : 'theme_render_template';
 
   return $render_fn($template_file, $variables);
