@@ -46,6 +46,7 @@ function fft_field_formatter_info() {
         'template'      => '',
         'image_style_1' => 'thumbnail',
         'image_style_2' => 'medium',
+        'settings'      => ''
       ),
     ),
   );
@@ -87,7 +88,6 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
 
-  $form = array();
   // Show select box for the option set.
   $optionsets = fft_get_templates();
 
@@ -107,23 +107,31 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
       }
 
       $form['image_style_1'] = array(
-        '#type' => 'select',
-        '#title' => t('Image Styles 1'),
-        '#options' => $image_style_options,
+        '#type'          => 'select',
+        '#title'         => t('Image Styles 1'),
+        '#options'       => $image_style_options,
         '#default_value' => $settings['image_style_1'],
       );
 
       $form['image_style_2'] = array(
-        '#type' => 'select',
-        '#title' => t('Image Styles 2'),
-        '#options' => $image_style_options,
+        '#type'          => 'select',
+        '#title'         => t('Image Styles 2'),
+        '#options'       => $image_style_options,
         '#default_value' => $settings['image_style_2'],
       );
       break;
   }
 
+  $form['settings'] = array(
+    '#type'          => 'textarea',
+    '#title'         => t('Settings Extras'),
+    '#default_value' => $settings['settings'],
+    '#description'   => t('Add settings extras for template, one setting per line with syntax key = value'),
+  );
+
   return $form;
 }
+
 
 /**
  * Implements hook_field_formatter_settings_summary().
@@ -217,8 +225,9 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
   $output = '';
   if (!empty($data)) {
     $output = fft_render($settings['template'], array(
-      "data"   => $data,
-      'entity' => $entity,
+      'data'     => $data,
+      'entity'   => $entity,
+      'settings' => drupal_parse_info_format($settings['settings']),
     ));
 
     $element[0] = array(
