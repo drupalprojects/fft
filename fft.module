@@ -46,7 +46,7 @@ function fft_field_formatter_info() {
         'template'      => '',
         'image_style_1' => 'thumbnail',
         'image_style_2' => 'medium',
-        'settings'      => ''
+        'settings'      => '',
       ),
     ),
   );
