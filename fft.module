@@ -53,6 +53,60 @@ function fft_field_formatter_info() {
 }
 
 /**
+ * Get real path with token.
+ *
+ * @param  string $file
+ *   File path. Use with {module-name} {theme-name} {theme} {fft}.
+ *
+ * @return string
+ *   Real path.
+ */
+function fft_realpath($file, $template_file){
+  $file = trim($file);
+
+  if (strpos($file, '{') === FALSE) {
+    return $file;
+  }
+
+  if (strpos($file, '{fft}') !== FALSE) {
+    $theme_path = dirname($template_file);
+    $file = str_replace('{fft}', $theme_path, $file);
+    return $file;
+  }
+
+  if (strpos($file, '{theme}') !== FALSE) {
+    $theme_default = $GLOBALS['conf']['theme_default'];
+    $theme_path = drupal_get_path('theme', $theme_default);
+    $file = str_replace('{theme}', $theme_path, $file);
+    return $file;
+  }
+
+  $matches = array();
+  $types = array('module', 'theme', 'library');
+
+  foreach ($types as $type) {
+    $pattern = '/\{' . $type . '-(.+)\}/';
+
+    preg_match($pattern, $file, $matches);
+
+    if($type == "library"){
+      if (count($matches) > 1 && ($path = libraries_get_path($matches[1])) != '') {
+        $file = str_replace($matches[0], $path, $file);
+        return $file;
+      }
+    }else{
+      if (count($matches) > 1 && ($path = drupal_get_path($type, $matches[1])) != '') {
+        $file = str_replace($matches[0], $path, $file);
+        return $file;
+      }
+    }
+  }
+
+  return $file;
+}
+
+
+/**
  * Clear up string.
  */
 function fft_cleanup_header_comment($str) {
@@ -75,7 +129,8 @@ function fft_get_templates() {
       if (!preg_match('|Template Name:(.*)$|mi', $file_content, $header)) {
         continue;
       }
-      $page_templates[$file->filename] = fft_cleanup_header_comment($header[1]);
+      $template_file = str_replace(fft_store_dir() . "/", '', $file->uri);
+      $page_templates[$template_file] = fft_cleanup_header_comment($header[1]);
     }
   }
   return $page_templates;
@@ -121,12 +176,21 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
       );
       break;
   }
+  $settings_des[] = t('Add settings extras for template, one setting per line with syntax key = value.');
+  $settings_des[] = t('Support array like key[] = value or key[name] = value.');
+  $settings_des[] = t('Support add css and js with syntax css = pathtofile.css and js = pathtofile.css');
+  $settings_des[] = t('Add multi css js with syntax css[] = pathtofile1.css, css[] = pathtofile2.css');
+  $settings_des[] = t('Support path tokens:');
+  $settings_des[] = t('-- <strong>{fft}</strong>: path to folder of selected template');
+  $settings_des[] = t('-- <strong>{module-name}</strong>: path to folder of module "name"');
+  $settings_des[] = t('-- <strong>{theme-name}</strong>: path to folder of theme "name"');
+  $settings_des[] = t('-- <strong>{theme}</strong>: path to folder of current default theme');
 
   $form['settings'] = array(
     '#type'          => 'textarea',
     '#title'         => t('Settings Extras'),
     '#default_value' => $settings['settings'],
-    '#description'   => t('Add settings extras for template, one setting per line with syntax key = value'),
+    '#description'   => implode("<br>", $settings_des),
   );
 
   return $form;
@@ -224,14 +288,32 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
   }
   $output = '';
   if (!empty($data)) {
-    $output = fft_render($settings['template'], array(
+    $template_file = fft_store_dir() . "/" . $settings['template'];
+    $settings_extras = drupal_parse_info_format($settings['settings']);
+    $attached = array();
+    foreach (array('js', 'css') as $item) {
+      if (isset($settings_extras[$item])) {
+        foreach ((array) $settings_extras[$item] as $key => $value) {
+          if (is_string($value)) {
+            $attached[$item][] = fft_realpath($value, $template_file);
+          }
+          else {
+            $attached[$item][] = $value;
+          }
+        }
+      }
+    }
+    $settings_extras = $attached + $settings_extras;
+
+    $output = fft_render($template_file, array(
       'data'     => $data,
       'entity'   => $entity,
-      'settings' => drupal_parse_info_format($settings['settings']),
+      'settings' => $settings_extras,
     ));
 
     $element[0] = array(
-      '#markup' => $output,
+      '#markup'   => $output,
+      '#attached' => $attached,
     );
   }
 
@@ -261,7 +343,7 @@ function fft_field_styled_image_url($image_uri, $style) {
 /**
  * Render template with variables.
  *
- * @param string $template
+ * @param string $template_file
  *   Template name.
  * @param array $variables
  *   Variables for template.
@@ -269,8 +351,7 @@ function fft_field_styled_image_url($image_uri, $style) {
  * @return string
  *   Rendered template.
  */
-function fft_render($template, $variables) {
-  $template_file = fft_store_dir() . "/" . $template;
+function fft_render($template_file, $variables) {
   if (!is_file($template_file)) {
     return "";
   }
