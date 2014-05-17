@@ -55,13 +55,13 @@ function fft_field_formatter_info() {
 /**
  * Get real path with token.
  *
- * @param  string $file
+ * @param string $file
  *   File path. Use with {module-name} {theme-name} {theme} {fft}.
  *
  * @return string
  *   Real path.
  */
-function fft_realpath($file, $template_file){
+function fft_realpath($file, $template_file) {
   $file = trim($file);
 
   if (strpos($file, '{') === FALSE) {
@@ -89,12 +89,13 @@ function fft_realpath($file, $template_file){
 
     preg_match($pattern, $file, $matches);
 
-    if($type == "library"){
+    if ($type == "library") {
       if (count($matches) > 1 && ($path = libraries_get_path($matches[1])) != '') {
         $file = str_replace($matches[0], $path, $file);
         return $file;
       }
-    }else{
+    }
+    else {
       if (count($matches) > 1 && ($path = drupal_get_path($type, $matches[1])) != '') {
         $file = str_replace($matches[0], $path, $file);
         return $file;
@@ -190,7 +191,7 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
     '#type'          => 'textarea',
     '#title'         => t('Settings Extras'),
     '#default_value' => $settings['settings'],
-    '#description'   => implode("<br>", $settings_des),
+    '#description'   => implode('<br>', $settings_des),
   );
 
   return $form;
