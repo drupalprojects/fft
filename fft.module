@@ -191,7 +191,7 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
     '#type'          => 'textarea',
     '#title'         => t('Settings Extras'),
     '#default_value' => $settings['settings'],
-    '#description'   => nl2br(implode('\r\n', $settings_des)),
+    '#description'   => nl2br(implode("\r\n", $settings_des)),
   );
 
   return $form;
