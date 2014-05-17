@@ -183,6 +183,7 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
   $settings_des[] = t('Add multi css js with syntax css[] = pathtofile1.css, css[] = pathtofile2.css');
   $settings_des[] = t('Support path tokens:');
   $settings_des[] = t('-- <strong>{fft}</strong>: path to folder of selected template');
+  $settings_des[] = t('-- <strong>{library-name}</strong>: path to folder of library "name"');
   $settings_des[] = t('-- <strong>{module-name}</strong>: path to folder of module "name"');
   $settings_des[] = t('-- <strong>{theme-name}</strong>: path to folder of theme "name"');
   $settings_des[] = t('-- <strong>{theme}</strong>: path to folder of current default theme');
