@@ -61,7 +61,7 @@ function fft_field_formatter_info() {
  * @return string
  *   Real path.
  */
-function fft_realpath($file, $template_file) {
+function fft_realpath($file, $template_file = '') {
   $file = trim($file);
 
   if (strpos($file, '{') === FALSE) {
@@ -131,7 +131,11 @@ function fft_get_templates() {
         continue;
       }
       $template_file = str_replace(fft_store_dir() . "/", '', $file->uri);
-      $page_templates[$template_file] = fft_cleanup_header_comment($header[1]);
+      $page_templates['templates'][$template_file] = fft_cleanup_header_comment($header[1]);
+      $settings = array();
+      if (preg_match('%/\*Settings:(.*?)\*/%s', $file_content, $settings)) {
+        $page_templates['settings'][$template_file] = trim($settings[1]);
+      }
     }
   }
   return $page_templates;
@@ -145,13 +149,23 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
   $settings = $display['settings'];
 
   // Show select box for the option set.
-  $optionsets = fft_get_templates();
+  $fft_templates = fft_get_templates();
+  $optionsets = $fft_templates['templates'];
+  $fft_templates['settings'][$settings['template']] = $settings['settings'];
+  $form['#attached']['js'][] = fft_realpath('{module-fft}/fft.js');
+  $form['#attached']['js'][] = array(
+    'data' => array(
+        'fft' => $fft_templates['settings'],
+      ),
+    'type' => 'setting',
+  );
 
   $form['template'] = array(
     '#title'         => t('Template'),
     '#type'          => 'select',
     '#options'       => $optionsets,
     '#default_value' => $settings['template'],
+    '#attributes'    => array('class' => array('fft-template')),
   );
 
   switch ($field['type']) {
@@ -192,6 +206,7 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
     '#type'          => 'textarea',
     '#title'         => t('Settings Extras'),
     '#default_value' => $settings['settings'],
+    '#attributes'    => array('class' => array('fft-settings')),
   );
 
   $form['settings_des'] = array(
@@ -218,7 +233,8 @@ function fft_field_formatter_settings_summary($field, $instance, $view_mode) {
 
   $summary = t('Formatter Template');
   if (isset($settings['template'])) {
-    foreach (fft_get_templates() as $name => $title) {
+    $fft_template = fft_get_templates();
+    foreach ($fft_template['templates'] as $name => $title) {
       if ($settings['template'] == $name) {
         $summary = t('Formatter Template') . ': ' . check_plain($title);
       }
@@ -244,17 +260,13 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
       foreach ($data as $key => $item) {
         $data[$key]['path']  = file_create_url($item['uri']);
         if ($field['type'] == 'image') {
-          $data[$key]['path_1'] = fft_field_styled_image_url($item['uri'], $settings['image_style_1']);
-          $dimensions = array("width" => $item['width'], "height" => $item['height']);
-          image_style_transform_dimensions($settings['image_style_1'], $dimensions);
-          $data[$key]['width_1']  = $dimensions["width"];
-          $data[$key]['height_1'] = $dimensions["height"];
-
-          $data[$key]['path_2'] = fft_field_styled_image_url($item['uri'], $settings['image_style_2']);
-          $dimensions = array("width" => $item['width'], "height" => $item['height']);
-          image_style_transform_dimensions($settings['image_style_2'], $dimensions);
-          $data[$key]['width_2']  = $dimensions["width"];
-          $data[$key]['height_2'] = $dimensions["height"];
+          for ($i=1; $i <= 2; $i++) {
+            $data[$key]["path_{$i}"] = fft_field_styled_image_url($item['uri'], $settings["image_style_{$i}"]);
+            $dimensions = array("width" => $item['width'], "height" => $item['height']);
+            image_style_transform_dimensions($settings["image_style_{$i}"], $dimensions);
+            $data[$key]["width_{$i}"]  = $dimensions["width"];
+            $data[$key]["height_{$i}"] = $dimensions["height"];
+          }
         }
       }
 
@@ -303,7 +315,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
     $template_file = fft_store_dir() . "/" . $settings['template'];
     $settings_extras = drupal_parse_info_format($settings['settings']);
     $attached = array();
-    foreach (array('js', 'css') as $item) {
+    foreach (array('js', 'css', 'library') as $item) {
       if (isset($settings_extras[$item])) {
         foreach ((array) $settings_extras[$item] as $key => $value) {
           if (is_string($value)) {
