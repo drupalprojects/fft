@@ -1,6 +1,6 @@
 (function ($) {
 /**
- * Behaviors.
+ * fft_template Behaviors.
  */
 Drupal.behaviors.fft_template = {
   attach: function (context, settings) {
@@ -11,6 +11,10 @@ Drupal.behaviors.fft_template = {
         $("textarea.fft-settings").val(Drupal.settings.fft[template]);
       }
     });
+
+    if ($("textarea.fft-settings").val() == "") {
+      $("select.fft-template.fft-processed").trigger('change');
+    }
   }
 };
 
