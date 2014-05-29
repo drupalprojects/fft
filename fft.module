@@ -44,8 +44,8 @@ function fft_field_formatter_info() {
       'field types' => $field_types,
       'settings' => array(
         'template'      => '',
-        'image_style_1' => 'thumbnail',
-        'image_style_2' => 'medium',
+        'image_style_1' => '',
+        'image_style_2' => '',
         'settings'      => '',
       ),
     ),
@@ -172,6 +172,7 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
     case 'image':
       $image_styles = image_styles();
       $image_style_options = array();
+      $image_style_options[''] = '--None--';
       foreach ($image_styles as $stylename => $style) {
         $image_style_options[$stylename] = $style['label'];
       }
@@ -261,11 +262,13 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
         $data[$key]['path']  = file_create_url($item['uri']);
         if ($field['type'] == 'image') {
           for ($i=1; $i <= 2; $i++) {
-            $data[$key]["path_{$i}"] = fft_field_styled_image_url($item['uri'], $settings["image_style_{$i}"]);
-            $dimensions = array("width" => $item['width'], "height" => $item['height']);
-            image_style_transform_dimensions($settings["image_style_{$i}"], $dimensions);
-            $data[$key]["width_{$i}"]  = $dimensions["width"];
-            $data[$key]["height_{$i}"] = $dimensions["height"];
+            if (!empty($settings["image_style_{$i}"])) {
+              $data[$key]["path_{$i}"] = fft_field_styled_image_url($item['uri'], $settings["image_style_{$i}"]);
+              $dimensions = array("width" => $item['width'], "height" => $item['height']);
+              image_style_transform_dimensions($settings["image_style_{$i}"], $dimensions);
+              $data[$key]["width_{$i}"]  = $dimensions["width"];
+              $data[$key]["height_{$i}"] = $dimensions["height"];
+            }
           }
         }
       }
