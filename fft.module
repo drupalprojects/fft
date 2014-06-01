@@ -147,7 +147,7 @@ function fft_get_templates() {
 function fft_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
-
+  $form = array();
   // Show select box for the option set.
   $fft_templates = fft_get_templates();
   $optionsets = $fft_templates['templates'];
