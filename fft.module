@@ -330,7 +330,10 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
         }
       }
     }
+
     $settings_extras = $attached + $settings_extras;
+    $settings_extras['image_style_1'] = $settings['image_style_1'];
+    $settings_extras['image_style_2'] = $settings['image_style_2'];
 
     $output = fft_render($template_file, array(
       'data'     => $data,
