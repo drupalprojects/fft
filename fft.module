@@ -170,24 +170,17 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
 
   switch ($field['type']) {
     case 'image':
-      $image_styles = image_styles();
-      $image_style_options = array();
-      $image_style_options[''] = '--None--';
-      foreach ($image_styles as $stylename => $style) {
-        $image_style_options[$stylename] = $style['label'];
-      }
-
       $form['image_style_1'] = array(
         '#type'          => 'select',
         '#title'         => t('Image Styles 1'),
-        '#options'       => $image_style_options,
+        '#options'       => image_style_options(),
         '#default_value' => $settings['image_style_1'],
       );
 
       $form['image_style_2'] = array(
         '#type'          => 'select',
         '#title'         => t('Image Styles 2'),
-        '#options'       => $image_style_options,
+        '#options'       => image_style_options(),
         '#default_value' => $settings['image_style_2'],
       );
       break;
