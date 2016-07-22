@@ -20,7 +20,7 @@ function fft_menu() {
 }
 
 /**
- * Config form for Field formatter template.
+ * Implements hook_form().
  */
 function fft_config_form($form, &$form_state) {
   $form['fft_store_dir'] = array(
@@ -57,9 +57,11 @@ function fft_field_formatter_info() {
  *
  * @param string $file
  *   File path. Use with {module-name} {theme-name} {theme} {fft}.
+ * @param string $template_file
+ *    The template file.
  *
  * @return string
- *   Real path.
+ *    Real path.
  */
 function fft_realpath($file, $template_file = '') {
   $file = trim($file);
@@ -106,9 +108,14 @@ function fft_realpath($file, $template_file = '') {
   return $file;
 }
 
-
 /**
  * Clear up string.
+ *
+ * @param string $str
+ *    The input string.
+ *
+ * @return string
+ *    Cleanup string.
  */
 function fft_cleanup_header_comment($str) {
   return trim(preg_replace("/\s*(?:\*\/|\?>).*/", '', $str));
@@ -155,8 +162,8 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
   $form['#attached']['js'][] = fft_realpath('{module-fft}/fft.js');
   $form['#attached']['js'][] = array(
     'data' => array(
-        'fft' => $fft_templates['settings'],
-      ),
+      'fft' => $fft_templates['settings'],
+    ),
     'type' => 'setting',
   );
 
@@ -217,7 +224,6 @@ function fft_field_formatter_settings_form($field, $instance, $view_mode, $form,
   return $form;
 }
 
-
 /**
  * Implements hook_field_formatter_settings_summary().
  */
@@ -230,14 +236,13 @@ function fft_field_formatter_settings_summary($field, $instance, $view_mode) {
     $fft_template = fft_get_templates();
     foreach ($fft_template['templates'] as $name => $title) {
       if ($settings['template'] == $name) {
-        $summary = t('Formatter Template') . ': ' . check_plain($title);
+        $summary = t('Formatter Template: @name', array($title));
       }
     }
   }
 
   return $summary;
 }
-
 
 /**
  * Implements hook_field_formatter_view().
@@ -254,7 +259,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
       foreach ($data as $key => $item) {
         $data[$key]['path']  = file_create_url($item['uri']);
         if ($field['type'] == 'image') {
-          for ($i=1; $i <= 2; $i++) {
+          for ($i = 1; $i <= 2; $i++) {
             if (!empty($settings["image_style_{$i}"])) {
               $data[$key]["path_{$i}"] = fft_field_styled_image_url($item['uri'], $settings["image_style_{$i}"]);
               $dimensions = array("width" => $item['width'], "height" => $item['height']);
@@ -306,7 +311,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
       break;
 
   }
-  $output = '';
+
   if (!empty($data)) {
     $template_file = fft_store_dir() . "/" . $settings['template'];
     $settings_extras = drupal_parse_info_format($settings['settings']);
@@ -344,7 +349,7 @@ function fft_field_formatter_view($entity_type, $entity, $field, $instance, $lan
 }
 
 /**
- * Get image url with stylename.
+ * Get image url with then style name.
  *
  * @param string $image_uri
  *   Image uri.
