@@ -7,8 +7,9 @@
 
 namespace Drupal\fft\Plugin\Field\FieldFormatter;
 
-use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Field\Plugin\Field\FieldFormatter\EntityReferenceFormatterBase;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Plugin implementation of the 'fft_formatter' formatter.
@@ -23,64 +24,65 @@ use Drupal\Core\Field\FieldItemListInterface;
  *   },
  * )
  */
-class FFTFormatter extends FormatterBase {
+class FFTFormatter extends EntityReferenceFormatterBase {
+
+  private static function isReference($type) {
+    return substr($type, 0, 16) === 'entity_reference';
+  }
   /**
    * {@inheritdoc}
    */
   public static function defaultSettings() {
-    return array(
-      'template'      => '',
-      'image_style_1' => '',
-      'image_style_2' => '',
-      'settings'      => '',
-    ) + parent::defaultSettings();
+    return [
+        'template' => '',
+        'image_style_1' => '',
+        'image_style_2' => '',
+        'settings' => '',
+      ] + parent::defaultSettings();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function settingsForm(array $form, array &$form_state) {
-    //$plugin_definition = $this->getPluginDefinition();
-/*    $field_name = $this->fieldDefinition->getName();
-    dpm($field_name);*/
+  public function settingsForm(array $form, FormStateInterface $form_state) {
     $settings = $this->getSettings();
     $field['type'] = $this->fieldDefinition->getType();
     $fft_templates = fft_get_templates();
     $optionsets = $fft_templates['templates'];
     $fft_templates['settings'][$settings['template']] = $settings['settings'];
     $form['#attached']['js'][] = fft_realpath('{module-fft}/fft.js');
-    $form['#attached']['js'][] = array(
-      'data' => array(
-          'fft' => $fft_templates['settings'],
-        ),
+    $form['#attached']['js'][] = [
+      'data' => [
+        'fft' => $fft_templates['settings'],
+      ],
       'type' => 'setting',
-    );
+    ];
 
-    $form['template'] = array(
-      '#title'         => t('Template'),
-      '#type'          => 'select',
-      '#options'       => $optionsets,
+    $form['template'] = [
+      '#title' => t('Template'),
+      '#type' => 'select',
+      '#options' => $optionsets,
       '#default_value' => $settings['template'],
-      '#attributes'    => array('class' => array('fft-template')),
-    );
+      '#attributes' => ['class' => ['fft-template']],
+    ];
 
     switch ($field['type']) {
       case 'image':
         //$image_styles = image_styles();
         $image_style_options = image_style_options();
-        $form['image_style_1'] = array(
-          '#type'          => 'select',
-          '#title'         => t('Image Styles 1'),
-          '#options'       => $image_style_options,
+        $form['image_style_1'] = [
+          '#type' => 'select',
+          '#title' => t('Image Styles 1'),
+          '#options' => $image_style_options,
           '#default_value' => $settings['image_style_1'],
-        );
+        ];
 
-        $form['image_style_2'] = array(
-          '#type'          => 'select',
-          '#title'         => t('Image Styles 2'),
-          '#options'       => $image_style_options,
+        $form['image_style_2'] = [
+          '#type' => 'select',
+          '#title' => t('Image Styles 2'),
+          '#options' => $image_style_options,
           '#default_value' => $settings['image_style_2'],
-        );
+        ];
         break;
     }
     $settings_des[] = t('Add settings extras for template, one setting per line with syntax key = value.');
@@ -89,29 +91,28 @@ class FFTFormatter extends FormatterBase {
     $settings_des[] = t('Add multi css js with syntax css[] = pathtofile1.css, css[] = pathtofile2.css');
     $settings_des[] = t('Support path tokens:');
     $settings_des[] = t('-- <strong>{fft}</strong>: path to folder of selected template');
-    $settings_des[] = t('-- <strong>{library-name}</strong>: path to folder of library "name"');
     $settings_des[] = t('-- <strong>{module-name}</strong>: path to folder of module "name"');
     $settings_des[] = t('-- <strong>{theme-name}</strong>: path to folder of theme "name"');
     $settings_des[] = t('-- <strong>{theme}</strong>: path to folder of current default theme');
 
-    $form['settings'] = array(
-      '#type'          => 'textarea',
-      '#title'         => t('Settings Extras'),
+    $form['settings'] = [
+      '#type' => 'textarea',
+      '#title' => t('Settings Extras'),
       '#default_value' => $settings['settings'],
-      '#attributes'    => array('class' => array('fft-settings')),
-    );
+      '#attributes' => ['class' => ['fft-settings']],
+    ];
 
-    $form['settings_des'] = array(
-      '#type'        => 'fieldset',
-      '#title'       => t('More Information'),
+    $form['settings_des'] = [
+      '#type' => 'fieldset',
+      '#title' => t('More Information'),
       '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
-    );
+      '#collapsed' => TRUE,
+    ];
 
-    $form['settings_des']['info'] = array(
-      '#type'   => 'markup',
+    $form['settings_des']['info'] = [
+      '#type' => 'markup',
       '#markup' => nl2br(implode("\r\n", $settings_des)),
-    );
+    ];
 
     return $form;
   }
@@ -120,14 +121,14 @@ class FFTFormatter extends FormatterBase {
    * {@inheritdoc}
    */
   public function settingsSummary() {
-    $summary = array();
-    $summary[] = t('Formtter Template');
+    $summary = [];
+    $summary[] = t('Formatter Template');
     if ($this->getSetting('template') != '') {
       $fft_template = fft_get_templates();
       foreach ($fft_template['templates'] as $name => $title) {
         if ($this->getSetting('template') == $name) {
-          $summary = array();
-          $summary[] = t('Formtter Template: @template', array('@template' => $title));
+          $summary = [];
+          $summary[] = t('Formatter Template: @template', ['@template' => $title]);
           break;
         }
       }
@@ -138,13 +139,31 @@ class FFTFormatter extends FormatterBase {
 
   /**
    * {@inheritdoc}
+   *
+   * Loads the entities referenced in that field across all the entities being
+   * viewed.
    */
-  public function viewElements(FieldItemListInterface $items) {
+  public function prepareView(array $entities_items) {
+    $field_type = $this->fieldDefinition->getType();
+    if (!$this->isReference($field_type)) {
+      return;
+    }
+    parent::prepareView($entities_items);
+  }
+
+
+  /**
+   * {@inheritdoc}
+   */
+  public function viewElements(FieldItemListInterface $items, $langcode) {
     $entity = $items->getEntity();
     $field_type = $this->fieldDefinition->getType();
     $settings = $this->getSettings();
-    $elements = fft_field_formatter_render($entity, $field_type, $items, $settings);
-
+    $data_items = $items;
+    if ($this->isReference($field_type)) {
+      $data_items = $this->getEntitiesToView($items, $langcode);
+    }
+    $elements = fft_field_formatter_render($entity, $field_type, $data_items, $settings, $langcode);
     return $elements;
   }
 }
