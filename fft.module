@@ -5,6 +5,8 @@
  * Field formatter template.
  */
 
+use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Template\Attribute;
 use Drupal\fft\Plugin\Field\FieldFormatter\FFTFormatter;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
@@ -190,6 +192,7 @@ function fft_field_formatter_render($entity, $field_type, $items, $settings, $la
     $element[0] = [
       '#markup' => $output,
       '#attached' => $attached,
+      '#fft' => ['reset' => TRUE]
     ];
   }
 

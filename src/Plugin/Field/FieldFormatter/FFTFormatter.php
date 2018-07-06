@@ -47,6 +47,7 @@ class FFTFormatter extends EntityReferenceFormatterBase {
         'image_style_1' => '',
         'image_style_2' => '',
         'settings' => '',
+        'reset' => 1,
       ] + parent::defaultSettings();
   }
 
@@ -54,25 +55,29 @@ class FFTFormatter extends EntityReferenceFormatterBase {
    * {@inheritdoc}
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
+    $form = parent::settingsForm($form, $form_state);
     $settings = $this->getSettings();
     $field['type'] = $this->fieldDefinition->getType();
     $fft_templates = fft_get_templates();
-    $optionsets = $fft_templates['templates'];
-    $fft_templates['settings'][$settings['template']] = $settings['settings'];
-    $form['#attached']['js'][] = fft_realpath('{module-fft}/fft.js');
-    $form['#attached']['js'][] = [
-      'data' => [
-        'fft' => $fft_templates['settings'],
-      ],
-      'type' => 'setting',
-    ];
+    $options_set = $fft_templates['templates'];
 
     $form['template'] = [
-      '#title' => t('Template'),
+      '#title' => $this->t('Template'),
       '#type' => 'select',
-      '#options' => $optionsets,
+      '#options' => $options_set,
       '#default_value' => $settings['template'],
       '#attributes' => ['class' => ['fft-template']],
+    ];
+
+    $form['reset'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Reset'),
+      '#options' => [
+        0 => 'No',
+        1 => 'Yes',
+      ],
+      '#default_value' => $settings['reset'],
+      '#description' => $this->t('Reset field markup'),
     ];
 
     switch ($field['type']) {
@@ -80,41 +85,40 @@ class FFTFormatter extends EntityReferenceFormatterBase {
         $image_style_options = image_style_options();
         $form['image_style_1'] = [
           '#type' => 'select',
-          '#title' => t('Image Styles 1'),
+          '#title' => $this->t('Image Styles 1'),
           '#options' => $image_style_options,
           '#default_value' => $settings['image_style_1'],
         ];
 
         $form['image_style_2'] = [
           '#type' => 'select',
-          '#title' => t('Image Styles 2'),
+          '#title' => $this->t('Image Styles 2'),
           '#options' => $image_style_options,
           '#default_value' => $settings['image_style_2'],
         ];
         break;
     }
-    $settings_des[] = t('Add settings extras for template, one setting per line with syntax key = value.');
-    $settings_des[] = t('Support array like key[] = value or key[name] = value.');
-    $settings_des[] = t('Support add css and js with syntax css = pathtofile.css and js = pathtofile.css');
-    $settings_des[] = t('Add multi css js with syntax css[] = pathtofile1.css, css[] = pathtofile2.css');
-    $settings_des[] = t('Support path tokens:');
-    $settings_des[] = t('-- <strong>{fft}</strong>: path to folder of selected template');
-    $settings_des[] = t('-- <strong>{module-name}</strong>: path to folder of module "name"');
-    $settings_des[] = t('-- <strong>{theme-name}</strong>: path to folder of theme "name"');
-    $settings_des[] = t('-- <strong>{theme}</strong>: path to folder of current default theme');
+    $settings_des[] = $this->t('Add settings extras for template, one setting per line with syntax key = value.');
+    $settings_des[] = $this->t('Support array like key[] = value or key[name] = value.');
+    $settings_des[] = $this->t('Support add css and js with syntax css = pathtofile.css and js = pathtofile.css');
+    $settings_des[] = $this->t('Add multi css js with syntax css[] = pathtofile1.css, css[] = pathtofile2.css');
+    $settings_des[] = $this->t('Support path tokens:');
+    $settings_des[] = $this->t('-- <strong>{fft}</strong>: path to folder of selected template');
+    $settings_des[] = $this->t('-- <strong>{module-name}</strong>: path to folder of module "name"');
+    $settings_des[] = $this->t('-- <strong>{theme-name}</strong>: path to folder of theme "name"');
+    $settings_des[] = $this->t('-- <strong>{theme}</strong>: path to folder of current default theme');
 
     $form['settings'] = [
       '#type' => 'textarea',
-      '#title' => t('Settings Extras'),
+      '#title' => $this->t('Settings Extras'),
       '#default_value' => $settings['settings'],
       '#attributes' => ['class' => ['fft-settings']],
     ];
 
     $form['settings_des'] = [
-      '#type' => 'fieldset',
-      '#title' => t('More Information'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
+      '#type' => 'details',
+      '#title' => $this->t('More Information'),
+      '#open' => FALSE,
     ];
 
     $form['settings_des']['info'] = [
@@ -130,13 +134,13 @@ class FFTFormatter extends EntityReferenceFormatterBase {
    */
   public function settingsSummary() {
     $summary = [];
-    $summary[] = t('Formatter Template');
+    $summary[] = $this->t('Formatter Template');
     if ($this->getSetting('template') != '') {
-      $fft_template = fft_get_templates();
+      $fft_template = fft_get_templates('fft');
       foreach ($fft_template['templates'] as $name => $title) {
         if ($this->getSetting('template') == $name) {
           $summary = [];
-          $summary[] = t('Formatter Template: @template', ['@template' => $title]);
+          $summary[] = $this->t('Formatter Template: @template', ['@template' => $title]);
           break;
         }
       }
@@ -173,5 +177,16 @@ class FFTFormatter extends EntityReferenceFormatterBase {
     }
     $elements = fft_field_formatter_render($entity, $field_type, $data_items, $settings, $langcode);
     return $elements;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function view(FieldItemListInterface $items, $langcode = NULL) {
+    $view = parent::view($items, $langcode);
+    if ($this->settings['reset'] === '1') {
+      unset($view['#theme']);
+    }
+    return $view;
   }
 }
