@@ -5,6 +5,9 @@
  * Field formatter template.
  */
 
+use Drupal\fft\Plugin\Field\FieldFormatter\FFTFormatter;
+use Symfony\Component\EventDispatcher\GenericEvent;
+
 
 /**
  * Get real path with token.
@@ -61,14 +64,14 @@ function fft_cleanup_header_comment($str) {
 }
 
 /**
- * Get avaiables templates.
+ * Get available templates.
  *
  * @return array
  *   List of Field formatter template.
  */
-function fft_get_templates() {
-  static $page_templates = NULL;
-  if (!$page_templates) {
+function fft_get_templates($start_with = 'fft') {
+  static $page_templates = [];
+  if (empty($page_templates[$start_with])) {
     $extension = fft_theme_extension();
     $files = file_scan_directory(fft_store_dir(), '/^.*' . $extension . '$/');
     foreach ($files as $full_path => $file) {
@@ -78,17 +81,31 @@ function fft_get_templates() {
         continue;
       }
       $template_file = str_replace(fft_store_dir() . "/", '', $file->uri);
-      $page_templates['templates'][$template_file] = fft_cleanup_header_comment($header[1]);
-      $settings = [];
-      if (preg_match('%/\*Settings:(.*?)\*/%s', $file_content, $settings)) {
-        $page_templates['settings'][$template_file] = trim($settings[1]);
+      $start_with_len = strlen($start_with);
+      if (substr($template_file, 0, $start_with_len) === $start_with) {
+        $page_templates[$start_with]['templates'][$template_file] = fft_cleanup_header_comment($header[1]);
+        $settings = [];
+        if (preg_match('%/\*Settings:(.*?)\*/%s', $file_content, $settings)) {
+          $page_templates[$start_with]['settings'][$template_file] = trim($settings[1]);
+        }
       }
     }
   }
 
-  return $page_templates;
+  return $page_templates[$start_with];
 }
 
+/**
+ * Render field formatter
+ *
+ * @param $entity
+ * @param $field_type
+ * @param $items
+ * @param $settings
+ * @param bool $langcode
+ *
+ * @return mixed
+ */
 function fft_field_formatter_render($entity, $field_type, $items, $settings, $langcode = FALSE) {
   $data = [];
   $element[0]['#markup'] = '';
@@ -161,12 +178,14 @@ function fft_field_formatter_render($entity, $field_type, $items, $settings, $la
       }
     }
     $settings_extras = $attached + $settings_extras;
-
-    $output = fft_render($template_file, [
+    $vars = [
       'data' => $data,
       'entity' => $entity,
       'settings' => $settings_extras,
-    ]);
+    ];
+    \Drupal::service('event_dispatcher')
+      ->dispatch(FFTFormatter::FFT_PREPROCESS, new GenericEvent($vars));
+    $output = fft_render($template_file, $vars);
 
     $element[0] = [
       '#markup' => $output,
@@ -189,22 +208,22 @@ function fft_field_formatter_render($entity, $field_type, $items, $settings, $la
  *   Return image url.
  */
 function fft_field_styled_image_url($image, $style) {
-  $image_infor = [];
+  $image_info = [];
   $style = \Drupal\image\Entity\ImageStyle::load($style);
   $image_uri = $image->entity->getFileUri();
   $image_filepath = $style->buildUri($image_uri);
   $style->createDerivative($image_uri, $image_filepath);
-  $image_infor['path'] = file_create_url($image_filepath);
+  $image_info['path'] = file_create_url($image_filepath);
   // Determine the dimensions of the styled image.
   $dimensions = [
     'width' => $image->width,
     'height' => $image->height,
   ];
   $style->transformDimensions($dimensions,$image_uri);
-  $image_infor['width'] = $dimensions['width'];
-  $image_infor['height'] = $dimensions['height'];
+  $image_info['width'] = $dimensions['width'];
+  $image_info['height'] = $dimensions['height'];
 
-  return $image_infor;
+  return $image_info;
 }
 
 function fft_theme_extension() {

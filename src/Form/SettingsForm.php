@@ -36,7 +36,7 @@ class SettingsForm extends ConfigFormBase {
 
     $form['fft_store_dir'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Formmater template directory'),
+      '#title' => $this->t('Formatter template directory'),
       '#default_value' => $this->config('fft.settings')->get('fft_store_dir'),
       '#description' => t('Configure directory store field formatter template.'),
     ];

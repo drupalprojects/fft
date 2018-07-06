@@ -25,10 +25,19 @@ use Drupal\Core\Form\FormStateInterface;
  * )
  */
 class FFTFormatter extends EntityReferenceFormatterBase {
+  const FFT_PREPROCESS = 'fft.preprocess';
 
+  /**
+   * Check is reference type.
+   *
+   * @param $type
+   *
+   * @return bool
+   */
   private static function isReference($type) {
     return substr($type, 0, 16) === 'entity_reference';
   }
+
   /**
    * {@inheritdoc}
    */
@@ -68,7 +77,6 @@ class FFTFormatter extends EntityReferenceFormatterBase {
 
     switch ($field['type']) {
       case 'image':
-        //$image_styles = image_styles();
         $image_style_options = image_style_options();
         $form['image_style_1'] = [
           '#type' => 'select',

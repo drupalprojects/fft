@@ -1,6 +1,6 @@
 type: module
 name: Field Formatter Template
-description: 'Provides Formmater template for any field.'
+description: 'Provides Formatter template for any field.'
 package: Field
 core: 8.x
 configure: admin/config/content/fft
