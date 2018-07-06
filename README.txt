@@ -16,7 +16,7 @@ Usage
 - Create your template, default Formatter template store in folder
 'sites/all/formatter', you can change this folder at 'admin/config/content/fft'.
 Formatter template create as normal twig template, example you create inline tags
-template, create file with name 'inline-tags.html.twig' in folder
+template, create file with name 'fft-inline-tags.html.twig' in folder
 'sites/all/formatter' open file and type:
 <code>
 {# Template Name: Inline Tags #}
