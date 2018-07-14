@@ -5,9 +5,9 @@
    */
   Drupal.behaviors.fft_template = {
     attach: function (context, settings) {
+      var $fft_settings = $("textarea.fft-settings");
       $("select.fft-template:not(.fft-processed)").addClass('fft-processed').change(function(event) {
         var template = this.value;
-        var $fft_settings = $("textarea.fft-settings");
         $fft_settings.val("");
         if (drupalSettings.fft[template] != 'undefined'){
           $fft_settings.val(drupalSettings.fft[template]);
