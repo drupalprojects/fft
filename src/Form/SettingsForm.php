@@ -34,11 +34,11 @@ class SettingsForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
 
-    $form['fft_store_dir'] = [
-      '#type' => 'textfield',
+    $form['fft_storage_dir'] = [
+      '#type' => 'textarea',
       '#title' => $this->t('Formatter template directory'),
-      '#default_value' => $this->config('fft.settings')->get('fft_store_dir'),
-      '#description' => t('Configure directory store field formatter template.'),
+      '#default_value' => $this->config('fft.settings')->get('fft_storage_dir'),
+      '#description' => t('Configure directory storage field formatter template. Each directory per line.'),
     ];
 
     return parent::buildForm($form, $form_state);
@@ -49,7 +49,7 @@ class SettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config('fft.settings')
-      ->set('fft_store_dir', $form_state->getValue('fft_store_dir'))
+      ->set('fft_storage_dir', $form_state->getValue('fft_storage_dir'))
       ->save();
   }
 }

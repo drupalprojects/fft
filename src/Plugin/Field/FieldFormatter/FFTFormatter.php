@@ -48,6 +48,7 @@ class FFTFormatter extends EntityReferenceFormatterBase {
         'image_style_2' => '',
         'settings' => '',
         'reset' => 1,
+        'isNew' => 1,
       ] + parent::defaultSettings();
   }
 
@@ -60,6 +61,16 @@ class FFTFormatter extends EntityReferenceFormatterBase {
     $field['type'] = $this->fieldDefinition->getType();
     $fft_templates = fft_get_templates();
     $options_set = $fft_templates['templates'];
+    $form['#attached']['library'][] = 'fft/backend';
+    if ($settings['isNew'] == 0) {
+      $fft_templates['settings'][$settings['template']] = $settings['settings'];
+    }
+    $form['#attached']['drupalSettings']['fft'] =  $fft_templates['settings'];
+
+    $form['isNew'] = [
+      '#type' => 'hidden',
+      '#value' => 0,
+    ];
 
     $form['template'] = [
       '#title' => $this->t('Template'),
@@ -77,7 +88,7 @@ class FFTFormatter extends EntityReferenceFormatterBase {
         1 => 'Yes',
       ],
       '#default_value' => $settings['reset'],
-      '#description' => $this->t('Reset field markup'),
+      '#description' => $this->t('Reset default Drupal field wrapper markup.'),
     ];
 
     switch ($field['type']) {
@@ -111,7 +122,7 @@ class FFTFormatter extends EntityReferenceFormatterBase {
     $form['settings'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Settings Extras'),
-      '#default_value' => $settings['settings'],
+      '#default_value' => '',
       '#attributes' => ['class' => ['fft-settings']],
     ];
 

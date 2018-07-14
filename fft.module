@@ -60,6 +60,10 @@ function fft_realpath($file, $template_file = '') {
 
 /**
  * Clear up string.
+ *
+ * @param $str
+ *
+ * @return string
  */
 function fft_cleanup_header_comment($str) {
   return trim(preg_replace("/\s*(?:\*\/|\?>).*/", '', $str));
@@ -68,6 +72,9 @@ function fft_cleanup_header_comment($str) {
 /**
  * Get available templates.
  *
+ * @param string $start_with
+ *   Prefix template
+ *
  * @return array
  *   List of Field formatter template.
  */
@@ -75,19 +82,19 @@ function fft_get_templates($start_with = 'fft') {
   static $page_templates = [];
   if (empty($page_templates[$start_with])) {
     $extension = fft_theme_extension();
-    $files = file_scan_directory(fft_store_dir(), '/^.*' . $extension . '$/');
+    $files = file_scan_directory(fft_storage_dir(), '/^.*' . $extension . '$/');
     foreach ($files as $full_path => $file) {
       $file_content = file_get_contents($full_path);
       $header = [];
       if (!preg_match('|Template Name:(.*)\#\}$|mi', $file_content, $header)) {
         continue;
       }
-      $template_file = str_replace(fft_store_dir() . "/", '', $file->uri);
+      $template_file = str_replace(fft_storage_dir() . "/", '', $file->uri);
       $start_with_len = strlen($start_with);
       if (substr($template_file, 0, $start_with_len) === $start_with) {
         $page_templates[$start_with]['templates'][$template_file] = fft_cleanup_header_comment($header[1]);
         $settings = [];
-        if (preg_match('%/\*Settings:(.*?)\*/%s', $file_content, $settings)) {
+        if (preg_match('/\{\#Settings:(.*?)\#\}/s', $file_content, $settings)) {
           $page_templates[$start_with]['settings'][$template_file] = trim($settings[1]);
         }
       }
@@ -164,7 +171,7 @@ function fft_field_formatter_render($entity, $field_type, $items, $settings, $la
   }
 
   if (!empty($data)) {
-    $template_file = fft_store_dir() . "/" . $settings['template'];
+    $template_file = fft_storage_dir() . "/" . $settings['template'];
     $settings_extras = drupal_parse_info_format($settings['settings']);
     $attached = [];
     foreach (['js', 'css'] as $item) {
@@ -179,20 +186,17 @@ function fft_field_formatter_render($entity, $field_type, $items, $settings, $la
         }
       }
     }
+
     $settings_extras = $attached + $settings_extras;
-    $vars = [
+    $output = fft_render($template_file, [
       'data' => $data,
       'entity' => $entity,
       'settings' => $settings_extras,
-    ];
-    \Drupal::service('event_dispatcher')
-      ->dispatch(FFTFormatter::FFT_PREPROCESS, new GenericEvent($vars));
-    $output = fft_render($template_file, $vars);
+    ]);
 
     $element[0] = [
       '#markup' => $output,
-      '#attached' => $attached,
-      '#fft' => ['reset' => TRUE]
+      '#attached' => $attached
     ];
   }
 
@@ -229,6 +233,11 @@ function fft_field_styled_image_url($image, $style) {
   return $image_info;
 }
 
+/**
+ * Theme template extension.
+ *
+ * @return string
+ */
 function fft_theme_extension() {
   $extension = '.html.twig';
   global $theme_engine;
@@ -270,15 +279,20 @@ function fft_render($template_file, $variables) {
 }
 
 /**
- * Get store directory.
+ * Get storage directory.
  *
  * @return string
- *   Path of store dicrectory.
+ *   Path of storage dicrectory.
  */
-function fft_store_dir() {
-  return \Drupal::config('fft.settings')->get('fft_store_dir');
+function fft_storage_dir() {
+  return \Drupal::config('fft.settings')->get('fft_storage_dir');
 }
 
+/**
+ * Get all available field type.
+ *
+ * @return array
+ */
 function fft_get_field_types() {
   return array_keys(\Drupal::service('plugin.manager.field.field_type')
     ->getDefinitions());
