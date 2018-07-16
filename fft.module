@@ -81,6 +81,7 @@ function fft_cleanup_header_comment($str) {
 function fft_get_templates($start_with = 'fft') {
   static $page_templates = [];
   if (empty($page_templates[$start_with])) {
+    $page_templates[$start_with] = [];
     $extension = fft_theme_extension();
     $files = file_scan_directory(fft_storage_dir(), '/^.*' . $extension . '$/');
     foreach ($files as $full_path => $file) {
@@ -94,6 +95,7 @@ function fft_get_templates($start_with = 'fft') {
       if (substr($template_file, 0, $start_with_len) === $start_with) {
         $page_templates[$start_with]['templates'][$template_file] = fft_cleanup_header_comment($header[1]);
         $settings = [];
+        $page_templates[$start_with]['settings'][$template_file] = '';
         if (preg_match('/\{\#Settings:(.*?)\#\}/s', $file_content, $settings)) {
           $page_templates[$start_with]['settings'][$template_file] = trim($settings[1]);
         }

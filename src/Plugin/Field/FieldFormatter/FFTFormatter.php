@@ -65,7 +65,7 @@ class FFTFormatter extends EntityReferenceFormatterBase {
     if ($settings['isNew'] == 0) {
       $fft_templates['settings'][$settings['template']] = $settings['settings'];
     }
-    $form['#attached']['drupalSettings']['fft'] =  $fft_templates['settings'];
+    $form['#attached']['drupalSettings']['fft'] =  !empty($fft_templates['settings']) ? $fft_templates['settings'] : [];
 
     $form['isNew'] = [
       '#type' => 'hidden',
@@ -111,13 +111,13 @@ class FFTFormatter extends EntityReferenceFormatterBase {
     }
     $settings_des[] = $this->t('Add settings extras for template, one setting per line with syntax key = value.');
     $settings_des[] = $this->t('Support array like key[] = value or key[name] = value.');
-    $settings_des[] = $this->t('Support add css and js with syntax css = pathtofile.css and js = pathtofile.css');
-    $settings_des[] = $this->t('Add multi css js with syntax css[] = pathtofile1.css, css[] = pathtofile2.css');
-    $settings_des[] = $this->t('Support path tokens:');
-    $settings_des[] = $this->t('-- <strong>{fft}</strong>: path to folder of selected template');
-    $settings_des[] = $this->t('-- <strong>{module-name}</strong>: path to folder of module "name"');
-    $settings_des[] = $this->t('-- <strong>{theme-name}</strong>: path to folder of theme "name"');
-    $settings_des[] = $this->t('-- <strong>{theme}</strong>: path to folder of current default theme');
+//    $settings_des[] = $this->t('Support add css and js with syntax css = pathtofile.css and js = pathtofile.css');
+//    $settings_des[] = $this->t('Add multi css js with syntax css[] = pathtofile1.css, css[] = pathtofile2.css');
+//    $settings_des[] = $this->t('Support path tokens:');
+//    $settings_des[] = $this->t('-- <strong>{fft}</strong>: path to folder of selected template');
+//    $settings_des[] = $this->t('-- <strong>{module-name}</strong>: path to folder of module "name"');
+//    $settings_des[] = $this->t('-- <strong>{theme-name}</strong>: path to folder of theme "name"');
+//    $settings_des[] = $this->t('-- <strong>{theme}</strong>: path to folder of current default theme');
 
     $form['settings'] = [
       '#type' => 'textarea',
@@ -148,11 +148,13 @@ class FFTFormatter extends EntityReferenceFormatterBase {
     $summary[] = $this->t('Formatter Template');
     if ($this->getSetting('template') != '') {
       $fft_template = fft_get_templates('fft');
-      foreach ($fft_template['templates'] as $name => $title) {
-        if ($this->getSetting('template') == $name) {
-          $summary = [];
-          $summary[] = $this->t('Formatter Template: @template', ['@template' => $title]);
-          break;
+      if (!empty($fft_template['templates'])) {
+        foreach ($fft_template['templates'] as $name => $title) {
+          if ($this->getSetting('template') == $name) {
+            $summary = [];
+            $summary[] = $this->t('Formatter Template: @template', ['@template' => $title]);
+            break;
+          }
         }
       }
     }
